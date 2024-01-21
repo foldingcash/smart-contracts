@@ -64,7 +64,8 @@ contract TokenMining(
         // auth
         require(checkSig(signature, fund));
         require(tx.time >= genesisBlockHeight); // ensure release only after genesis
-        require(tx.time >= blockHeight); // ensure blockHeight is current
+        require(tx.time >= blockHeight); // ensure blockHeight upper
+        require(blockHeight > genesisBlockHeight); // ensure blockHeight after genesis
 
         // inputs
         require(tx.inputs.length == 2);
@@ -81,6 +82,7 @@ contract TokenMining(
 
         // require new blocks produced
         require(tx.time >= releaseHeight);
+        require(blockHeight > releaseHeight);
 
         // declare next state
         int releaseHeight_next = blockHeight;
@@ -103,16 +105,17 @@ contract TokenMining(
             releaseAmount = passedBlocksSinceRelease * reward;
         }
 
+        // calc change
         int changeAmount = tokenAmount - releaseAmount;
 
         // outputs
         bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
         require(tx.outputs[0].lockingBytecode == recipientLockingBytecode);
 
-        if (changeAmount <= reward) {
+        if (changeAmount <= reward) { // EOL
             require(tx.outputs.length == 1);
             require(tx.outputs[0].tokenAmount == tokenAmount);
-        } else {
+        } else { // normal release
             require(tx.outputs.length == 3);
 
             // Check that the outputs send the correct amounts
