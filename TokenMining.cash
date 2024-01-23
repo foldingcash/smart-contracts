@@ -26,10 +26,10 @@ contract TokenMining(
     function mintGenesis(sig signature) {
         // auth
         require(checkSig(signature, fund));
-        require(halvingLength > 0);
+        // require(halvingLength > 0);
         require(halvingLength < 500000000);
-        require(genesisBlockHeight >= 0);
-        require(tokenSupply > 0);
+        // require(genesisBlockHeight >= 0);
+        // require(tokenSupply > 0);
 
         // inputs
         require(tx.inputs.length == 1);
@@ -63,12 +63,15 @@ contract TokenMining(
     function releaseRewards(sig signature, int blockHeight) {
         // auth
         require(checkSig(signature, fund));
-        require(tx.time >= genesisBlockHeight); // ensure transaction after genesis
-        require(tx.time >= blockHeight); // ensure blockHeight at most current height
+        //require(tx.time >= genesisBlockHeight); // ensure transaction after genesis
+        require(tx.time >= blockHeight); // ensure blockHeight is at most the current height
 
         // inputs
         require(tx.inputs.length == 2);
         require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
+
+        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
+        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode);
 
         // get state
         bytes state = tx.inputs[1].nftCommitment;
@@ -89,8 +92,7 @@ contract TokenMining(
         int reward_next = reward;
 
         // logic
-        int tokenAmount = tx.inputs[0].tokenAmount;
-        int passedBlocksSinceRelease = blockHeight - releaseHeight; // TODO: off by one error here
+        int passedBlocksSinceRelease = blockHeight - releaseHeight;
         int passedBlocksSinceHalving = blockHeight - halvingHeight;
         int releaseAmount = passedBlocksSinceRelease * reward;
 
@@ -105,11 +107,8 @@ contract TokenMining(
         }
 
         // calc change
+        int tokenAmount = tx.inputs[0].tokenAmount;
         int changeAmount = tokenAmount - releaseAmount;
-
-        // outputs
-        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
-        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode);
 
         if (changeAmount <= reward) { // EOL
             require(tx.outputs.length == 1);
@@ -127,8 +126,8 @@ contract TokenMining(
             require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode);
 
             // Update the block height of the previous pledge, kept in the NFT commitment
-            bytes state_next = bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next);
-            require(tx.outputs[2].nftCommitment == state_next);
+            // bytes state_next = bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next);
+            require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next));
         }
     }
 
@@ -158,12 +157,14 @@ contract TokenMining(
         require(tx.inputs[2].tokenCategory == bytes(0) || tx.inputs[2].tokenCategory == tx.inputs[0].tokenCategory); // ensure no NFT or token is the same as mining
 
         // logic
-        int newTokenAmount = tx.inputs[0].tokenAmount + tx.inputs[2].tokenAmount;
 
         // outputs
         require(tx.outputs.length == 2);
         require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);
+
+        int newTokenAmount = tx.inputs[0].tokenAmount + tx.inputs[2].tokenAmount;
         require(tx.outputs[0].tokenAmount == newTokenAmount);
+        
         require(tx.outputs[1].nftCommitment == tx.inputs[1].nftCommitment);
         require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
         require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode);
