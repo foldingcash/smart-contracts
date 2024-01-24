@@ -10,10 +10,10 @@ pragma cashscript ^0.10.0;
 /// <param name="halvingLength">The number of blocks between each halving</param>
 contract TokenMining(
     pubkey fund,
-    int tokenSupply,
-    int genesisBlockHeight,
-    int genesisBlockReward,
-    int halvingLength,
+    // int tokenSupply,
+    // int genesisBlockHeight,
+    // int genesisBlockReward,
+    // int halvingLength,
 ) {
     /// <summary>
     ///     Mint the NFT state object BEFORE the genesis block
@@ -27,20 +27,20 @@ contract TokenMining(
     ///     <o0>Return i0 back to contract</o0>
     ///     <o1>The initialized state object</o1>
     /// </outputs>
-    function mintGenesis() {
-        require(within(halvingLength, 1, 500000000));
+    // function mintGenesis() {
+    //     require(within(halvingLength, 1, 500000000));
 
-        // inputs
-        require(tx.inputs.length == 1);
-        require(tx.inputs[0].tokenAmount == tokenSupply); // ensure we start w/ the full supply
+    //     // inputs
+    //     require(tx.inputs.length == 1);
+    //     require(tx.inputs[0].tokenAmount == tokenSupply); // ensure we start w/ the full supply
 
-        // outputs
-        require(tx.outputs.length == 2);
-        require(tx.outputs[0].tokenAmount == tokenSupply);
-        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
-        require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode);
-        require(tx.outputs[1].nftCommitment == ((bytes8(genesisBlockHeight) + bytes8(genesisBlockHeight) + bytes8(genesisBlockReward))));
-    }    
+    //     // outputs
+    //     require(tx.outputs.length == 2);
+    //     require(tx.outputs[0].tokenAmount == tokenSupply);
+    //     require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
+    //     require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode);
+    //     require(tx.outputs[1].nftCommitment == ((bytes8(genesisBlockHeight) + bytes8(genesisBlockHeight) + bytes8(genesisBlockReward))));
+    // }    
 
     /// <summary>
     ///     Release the tokens up to the current block height or halving event which ever comes first
@@ -74,11 +74,13 @@ contract TokenMining(
         bytes state = tx.inputs[1].nftCommitment;
         bytes releaseHeight_state, bytes others = state.split(8);
         bytes halvingHeight_state, bytes reward_state = others.split(8);
+        bytes reward_state, bytes halvingLength_state = 
         
         int releaseHeight = int(releaseHeight_state);
         int halvingHeight = int(halvingHeight_state);
         int reward = int(reward_state);
 
+        require(within(halvingLength, 1, 500000000));
         // ensure blocks to release
         require(tx.time >= releaseHeight);
         require(blockHeight >= releaseHeight);
