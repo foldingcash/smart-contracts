@@ -7,7 +7,6 @@ pragma cashscript ^0.10.0;
 contract TokenMining(
     pubkey fund,
 ) {
-
     /// <summary>
     ///     Release the tokens up to the current block height or halving event which ever comes first
     /// </summary>
@@ -125,7 +124,7 @@ contract TokenMining(
         // inputs
         require(tx.inputs.length == 3);
         require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
-        require(tx.inputs[2].tokenCategory == bytes(0)); // ensure no FT or NFT
+        require(tx.inputs[2].tokenCategory == bytes(0)); // ensure no Token or NFT
 
         // outputs
         require(tx.outputs.length == 2);
