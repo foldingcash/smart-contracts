@@ -4,8 +4,10 @@ pragma cashscript ^0.10.0;
 ///     Create a token mining contract that follows a half-life algorithm
 /// </summary>
 /// <param name="fund">The receiving fund</param>
+/// <param name="halvingLength">The number of blocks between halvings</param>
 contract TokenMining(
     pubkey fund,
+    int halvingLength,
 ) {
     /// <summary>
     ///     Release the tokens up to the current block height or halving event which ever comes first
@@ -14,15 +16,16 @@ contract TokenMining(
     ///     If the halving event occurred between last release and current block then call this function multiple times to release all available funds
     /// </notes>
     /// <param name="signature">Fund's signature</param>
-    /// <param name="blockHeight">Current block height</param>
+    /// <param name="blockHeight">Block height to release up to</param>
     /// <inputs>
     ///     <i0>The token's UTXO</i0>
     ///     <i1>The state object</i1>
+    ///     <i2>Transaction fee funding</i2>
     /// </inputs>
     /// <outputs>
     ///     <o0>Send tokens to fund</o0>
     ///     <o1>Return i0 back to contract unless EOL</o1>
-    ///     <o2>The initialized state object unless EOL</o2>
+    ///     <o2>The state object unless EOL</o2>
     /// </outputs>
     function releaseRewards(sig signature, int blockHeight) {
         // auth
@@ -32,24 +35,25 @@ contract TokenMining(
         require(tx.time >= blockHeight); // ensure blockHeight is at most the current height
 
         // inputs
-        require(tx.inputs.length == 2);
+        require(tx.inputs.length == 3);
         require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash); // token and NFT should be from same transaction
+        // ensure transaction fee input doesn't have other data
+        require(tx.inputs[2].nftCommitment == 0x); 
+        require(tx.inputs[2].tokenCategory == 0x);
 
         // get state
         bytes state = tx.inputs[1].nftCommitment;
 
         // split state
-        bytes releaseHeight_state, bytes others = state.split(8);
-        bytes halvingHeight_state, bytes more = others.split(8);
-        bytes reward_state, bytes halvingLength_state = more.split(8);
+        bytes releaseHeight_state, bytes rest = state.split(8);
+        bytes halvingHeight_state, bytes reward_state = rest.split(8);
         
         // type state
         int releaseHeight = int(releaseHeight_state);
         int halvingHeight = int(halvingHeight_state);
         int reward = int(reward_state);
-        int halvingLength = int(halvingLength_state);
 
-        // validate state
+        // validate state, needed for t0
         require(releaseHeight >= 0);
         require(halvingHeight >= 0);
         require(reward > 0);
@@ -73,7 +77,7 @@ contract TokenMining(
         if (minedBlocksSinceHalving >= halvingLength) {
             releaseHeight_next = halvingHeight + halvingLength;
             halvingHeight_next = releaseHeight_next;
-            reward_next = reward / 2;
+            reward_next = max(reward / 2, 1); // don't let it go to zero, a minimum of one token per block
 
             // stop the release at the halving at most
             minedBlocksSinceLastRelease = releaseHeight_next - releaseHeight;
@@ -87,51 +91,25 @@ contract TokenMining(
         // outputs
         if (changeAmount <= reward) { // EOL
             require(tx.outputs.length == 1);
+            require(tx.outputs[0].tokenAmount == changeAmount);
         } else { // normal release
             require(tx.outputs.length == 3);
 
-            // Check that the outputs send the correct amounts
+            // Check that the released amount is sent to the fund
             require(tx.outputs[0].tokenAmount == releaseAmount);
 
+            // Send the change value back to the same smart contract locking bytecode
             require(tx.outputs[1].tokenAmount == changeAmount);
-            require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode); // Send the change value back to the same smart contract locking bytecode
+            require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode); 
+            require(tx.outputs[1].tokenCategory == tx.inputs[0].tokenCategory);
 
             require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode); // Send the nft commitment to contract locking bytecode
-            require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next) + bytes8(halvingLength)); // Update the block height of the previous pledge, kept in the NFT commitment
+            require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next)); // Updated state check
         }
 
         bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
         require(tx.outputs[0].lockingBytecode == recipientLockingBytecode); // ensure release is to the fund
-    }
-
-    /// <summary>
-    ///     Combine additional fund inputs (Bitcoin) w/ a token input
-    /// </summary>
-    /// <param name="signature">Fund's signature</param>
-    /// <inputs>
-    ///     <i0>The token's UTXO</i0>
-    ///     <i1>The state object</i1>
-    ///     <i2>Addditional funds to combine</i2>
-    /// </inputs>
-    /// <outputs>
-    ///     <o1>Return i0 + i2 back to contract</o1>
-    ///     <o2>The initialized state object</o2>
-    /// </outputs>
-    function combineInputs(sig signature) {
-        // auth
-        require(checkSig(signature, fund));
-
-        // inputs
-        require(tx.inputs.length == 3);
-        require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
-        require(tx.inputs[2].tokenCategory == bytes(0)); // ensure no Token or NFT
-
-        // outputs
-        require(tx.outputs.length == 2);
-        require(tx.outputs[0].tokenAmount == tx.inputs[0].tokenAmount + tx.inputs[2].tokenAmount);
-        require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);        
-        require(tx.outputs[1].nftCommitment == tx.inputs[1].nftCommitment);
-        require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
-        require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode);
+        require(tx.outputs[0].nftCommitment == 0x);
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);
     }
 }
