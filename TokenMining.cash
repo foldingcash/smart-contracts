@@ -53,9 +53,10 @@ contract TokenMining(
         int halvingHeight = int(halvingHeight_state);
         int reward = int(reward_state);
 
-        // validate state, needed for t0
+        // validate state, mostly needed for t0, tn state validated further down
         require(releaseHeight >= 0);
         require(halvingHeight >= 0);
+        require(releaseHeight >= halvingHeight);
         require(reward > 0);
         require(within(halvingLength, 1, 500000000));
 
@@ -86,10 +87,10 @@ contract TokenMining(
 
         // calc change
         int tokenAmount = tx.inputs[0].tokenAmount;
-        int changeAmount = tokenAmount - releaseAmount;
+        int changeAmount = max(tokenAmount - releaseAmount, tokenAmount);
         
         // outputs
-        if (changeAmount <= reward) { // EOL
+        if (changeAmount <= releaseAmount) { // EOL
             require(tx.outputs.length == 1);
             require(tx.outputs[0].tokenAmount == changeAmount);
         } else { // normal release
