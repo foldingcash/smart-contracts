@@ -8,14 +8,14 @@ contract TokenMining_Mint(
         require(tokenAmount > 0);
 
         // validate inputs
-        require(tx.inputs.length == 1)
+        require(tx.inputs.length == 1);
         require(tx.inputs[0].lockingBytecode == new LockingBytecodeP2PKH(hash160(fund)));
         require(tx.inputs[0].tokenCategory == 0x);
 
         // validate outputs
         require(tx.outputs.length == 1);
         require(tx.outputs[0].lockingBytecode == tx.inputs[0].lockingBytecode);
-        require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash)
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
         require(tx.outputs[0].tokenAmount == tokenAmount);
         require(tx.outputs[0].nftCommitment == 0x);
     }
@@ -32,7 +32,7 @@ contract TokenMining_Mint(
         require(tx.inputs.length == 1);
         require(tx.inputs[0].lockingBytecode == fundLockingBytecode);
         require(tx.inputs[0].tokenCategory != 0x);
-        require(tx.inputs[0].tokenAmount >= tokenLockAmount)
+        require(tx.inputs[0].tokenAmount >= tokenLockAmount);
         require(tx.inputs[0].nftCommitment == 0x);
         
         // verify outputs
@@ -41,14 +41,14 @@ contract TokenMining_Mint(
         bytes25 nextContractLockingBytecode = new LockingBytecodeP2PKH(hash160(nextContract));
         
         // verify token output
-        require(tx.outputs[0].lockingBytecode == nextContractLockingBytecode)
+        require(tx.outputs[0].lockingBytecode == nextContractLockingBytecode);
         require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);
-        require(tx.outputs[0].tokenAmount == tokenMintAmount - tokenLockAmount);
+        require(tx.outputs[0].tokenAmount == tx.inputs[0].tokenAmount - tokenLockAmount);
 
         // verify state output
-        require(tx.outputs[1].lockingBytecode == nextContractLockingBytecode)
-        require(tx.outputs[1].tokenCategory == (0x00 + outpointTransactionHash));
-        require(tx.outputs[1].nftCommitment == bytes8(initialBlockHeight) + bytes8(initialBlockHeight) + bytes8(initialRewardAmount))
+        require(tx.outputs[1].lockingBytecode == nextContractLockingBytecode);
+        require(tx.outputs[1].tokenCategory == (0x00 + tx.inputs[0].outpointTransactionHash));
+        require(tx.outputs[1].nftCommitment == bytes8(initialBlockHeight) + bytes8(initialBlockHeight) + bytes8(initialRewardAmount));
 
         // verify change output
         require(tx.outputs[2].lockingBytecode == fundLockingBytecode);
