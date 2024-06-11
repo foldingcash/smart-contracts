@@ -1,0 +1,48 @@
+pragma cashscript ^0.10.0;
+
+contract TokenMining_Mint(
+    pubkey fund,
+) {
+    function spend(sig signature) {
+        // validate parameters
+        require(checkSig(signature, fund));
+    }
+
+    function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
+        // parameter validation
+        require(checkSig(signature, fund));
+        require(amount > 0);
+        require(lockAmount >= 0);
+        require(blockHeight >= 0);
+        require(reward > 0);
+
+        // verify inputs
+        require(tx.inputs.length == 1);
+        require(tx.inputs[0].tokenCategory == 0x);
+        
+        // verify outputs
+        require(tx.outputs.length == 3);
+        
+        // verify token output        
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[0].tokenAmount == lockAmount);
+
+        // verify state output
+        require(tx.outputs[1].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[1].nftCommitment == bytes8(blockHeight) + bytes8(blockHeight) + bytes8(reward));
+
+        // verify change output
+        bytes25 fundLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
+        require(tx.outputs[2].lockingBytecode == fundLockingBytecode);
+        require(tx.outputs[2].nftCommitment == 0x);
+
+        // verify token change output
+        int tokenChange = max(amount - lockAmount, 0);
+        if(tokenChange > 0) {
+            require(tx.outputs[2].tokenCategory == tx.inputs[0].tokenCategory);
+            require(tx.outputs[2].tokenAmount == tokenChange);
+        } else {
+            require(tx.outputs[2].tokenCategory == 0x);
+        }
+    }
+}
