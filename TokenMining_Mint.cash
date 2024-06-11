@@ -3,13 +3,18 @@ pragma cashscript ^0.10.0;
 contract TokenMining_Mint(
     pubkey fund,
 ) {
-    function mintToken(int tokenAmount) {
+    function returnUtxo(sig signature) {
         // validate parameters
+        require(checkSig(signature, fund));
+    }
+
+    function mintToken(sig signature, int tokenAmount) {
+        // validate parameters
+        require(checkSig(signature, fund));
         require(tokenAmount > 0);
 
         // validate inputs
         require(tx.inputs.length == 1);
-        require(tx.inputs[0].lockingBytecode == new LockingBytecodeP2PKH(hash160(fund)));
         require(tx.inputs[0].tokenCategory == 0x);
 
         // validate outputs
@@ -20,17 +25,15 @@ contract TokenMining_Mint(
         require(tx.outputs[0].nftCommitment == 0x);
     }
 
-    function mintState(pubkey nextContract, int tokenLockAmount, int initialBlockHeight, int initialRewardAmount) {
+    function mintState(sig signature, pubkey nextContract, int tokenLockAmount, int initialBlockHeight, int initialRewardAmount) {
         // parameter validation
+        require(checkSig(signature, fund));
         require(tokenLockAmount > 0);
         require(initialBlockHeight >= 0);
         require(initialRewardAmount > 0);
 
-        bytes25 fundLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
-
         // verify inputs
         require(tx.inputs.length == 1);
-        require(tx.inputs[0].lockingBytecode == fundLockingBytecode);
         require(tx.inputs[0].tokenCategory != 0x);
         require(tx.inputs[0].tokenAmount >= tokenLockAmount);
         require(tx.inputs[0].nftCommitment == 0x);
@@ -51,6 +54,7 @@ contract TokenMining_Mint(
         require(tx.outputs[1].nftCommitment == bytes8(initialBlockHeight) + bytes8(initialBlockHeight) + bytes8(initialRewardAmount));
 
         // verify change output
+        bytes25 fundLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
         require(tx.outputs[2].lockingBytecode == fundLockingBytecode);
         require(tx.outputs[2].nftCommitment == 0x);
 
