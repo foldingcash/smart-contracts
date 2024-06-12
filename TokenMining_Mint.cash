@@ -14,7 +14,7 @@ contract TokenMining_Mint(
         // parameter validation
         require(checkSig(signature, fund));
         require(amount > 0);
-        require(lockAmount >= 0);
+        require(lockAmount > 0);
         require(blockHeight >= 0);
         require(reward > 0);
 
