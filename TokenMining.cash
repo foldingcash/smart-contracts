@@ -28,21 +28,28 @@ contract TokenMining(
     ///     <o2>The state object unless EOL</o2>
     /// </outputs>
     function releaseRewards(sig signature, int blockHeight) {
+        int constant MinimumAmount = 1000 sats;
+
         // auth
         require(checkSig(signature, fund));
 
-        // input validation
+        // function input validation
+        require(blockHeight >= 0);
         require(tx.time >= blockHeight); // ensure blockHeight is at most the current height
 
-        // inputs
+        // validate UTXO inputs
         require(tx.inputs.length == 3);
-        require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash); // token and NFT should be from same transaction
+        // token and NFT should be from same transaction
+        require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
         // ensure transaction fee input doesn't have other data
         require(tx.inputs[2].nftCommitment == 0x); 
         require(tx.inputs[2].tokenCategory == 0x);
 
         // get state
         bytes state = tx.inputs[1].nftCommitment;
+
+        // raw state validation
+        require(state.length (8 * 3));
 
         // split state
         bytes releaseHeight_state, bytes rest = state.split(8);
@@ -53,7 +60,7 @@ contract TokenMining(
         int halvingHeight = int(halvingHeight_state);
         int reward = int(reward_state);
 
-        // validate state, mostly needed for t0, tn state validated further down
+        // validate typed state
         require(releaseHeight >= 0);
         require(halvingHeight >= 0);
         require(releaseHeight >= halvingHeight);
@@ -69,7 +76,7 @@ contract TokenMining(
         int halvingHeight_next = halvingHeight;
         int reward_next = reward;
 
-        // logic
+        // start logic
         int minedBlocksSinceLastRelease = blockHeight - releaseHeight + 1;
         int releaseAmount = minedBlocksSinceLastRelease * reward;
 
@@ -85,11 +92,11 @@ contract TokenMining(
             releaseAmount = minedBlocksSinceLastRelease * reward;
         }
 
-        // calc change
+        // calculate token change
         int tokenAmount = tx.inputs[0].tokenAmount;
         int changeAmount = max(tokenAmount - releaseAmount, tokenAmount);
         
-        // outputs
+        // validate UTXO outputs
         if (changeAmount <= releaseAmount) { // EOL
             require(tx.outputs.length == 1);
             require(tx.outputs[0].tokenAmount == changeAmount);
@@ -100,10 +107,12 @@ contract TokenMining(
             require(tx.outputs[0].tokenAmount == releaseAmount);
 
             // Send the change value back to the same smart contract locking bytecode
+            require(tx.outputs[1].amount == MinimumAmount);
             require(tx.outputs[1].tokenAmount == changeAmount);
             require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode); 
             require(tx.outputs[1].tokenCategory == tx.inputs[0].tokenCategory);
 
+            require(tx.outputs[2].amount == MinimumAmount);
             require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode); // Send the nft commitment to contract locking bytecode
             require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next)); // Updated state check
         }
