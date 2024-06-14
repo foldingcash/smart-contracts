@@ -32,7 +32,7 @@ contract TokenMining_Mint(
         require(amount > 0);
         require(lockAmount > 0);
         require(amount >= lockAmount);
-        require(blockHeight >= 0);
+        require(within(blockHeight, 0, 500000000));
         require(reward > 0);
 
         // verify inputs
