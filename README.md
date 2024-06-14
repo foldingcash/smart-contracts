@@ -7,3 +7,4 @@ when encoding byte data
 additional notes
 * block height index starts at zero
 * division is floored like standard int computing
+* pubkey is public key hex, 33 bytes
