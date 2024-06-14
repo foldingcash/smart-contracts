@@ -24,6 +24,14 @@ contract TokenMining_Mint(
     /// <param name="lockAmount">The amount of tokens that'll be locked in the mining contract</param>
     /// <param name="blockHeight">The block height the token mining will start</param>
     /// <param name="reward">The initial token reward per block</param>
+    /// <inputs>
+    ///     <i0>Funding input</i0>
+    /// </inputs>
+    /// <outputs>
+    ///     <o0>Create tokens</o0>
+    ///     <o1>Create state</o1>
+    ///     <o2>Return change to fund w/ any unlocked tokens</o2>
+    /// </outputs>
     function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
         int constant MinimumValue = 1000 sats;
 
@@ -32,7 +40,7 @@ contract TokenMining_Mint(
         require(amount > 0);
         require(lockAmount > 0);
         require(amount >= lockAmount);
-        require(within(blockHeight, 0, 500000000));
+        require(within(blockHeight, 0, 500000000 + 1));
         require(reward > 0);
 
         // verify inputs
