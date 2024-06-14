@@ -65,7 +65,7 @@ contract TokenMining(
         require(halvingHeight >= 0);
         require(releaseHeight >= halvingHeight);
         require(reward > 0);
-        require(within(halvingLength, 1, 500000000));
+        require(within(halvingLength, 1, 500000000 + 1));
 
         // ensure blocks have been produced to release more
         require(tx.time >= releaseHeight);
