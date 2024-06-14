@@ -1,125 +1,69 @@
 pragma cashscript ^0.10.0;
 
 /// <summary>
-///     Create a token mining contract that follows a half-life algorithm
+///     Mint the token and state for a token mining contract
 /// </summary>
-/// <param name="fund">The receiving fund</param>
-/// <param name="halvingLength">The number of blocks between halvings</param>
-contract TokenMining(
+/// <param name="fund">The address used to supply and auth the contract</param>
+contract TokenMining_Mint(
     pubkey fund,
-    int halvingLength,
 ) {
     /// <summary>
-    ///     Release the tokens up to the current block height or halving event which ever comes first
+    ///     Spend UTXOs with no restrictions
     /// </summary>
-    /// <notes>
-    ///     If the halving event occurred between last release and current block then call this function multiple times to release all available funds
-    /// </notes>
-    /// <param name="signature">Fund's signature</param>
-    /// <param name="blockHeight">Block height to release up to</param>
-    /// <inputs>
-    ///     <i0>The token's UTXO</i0>
-    ///     <i1>The state object</i1>
-    ///     <i2>Transaction fee funding</i2>
-    /// </inputs>
-    /// <outputs>
-    ///     <o0>Send tokens to fund</o0>
-    ///     <o1>Return i0 back to contract unless EOL</o1>
-    ///     <o2>The state object unless EOL</o2>
-    /// </outputs>
-    function releaseRewards(sig signature, int blockHeight) {
-        int constant MinimumAmount = 1000 sats;
-
-        // auth
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
+    function spend(sig signature) {
+        // validate parameters
         require(checkSig(signature, fund));
+    }
 
-        // function input validation
+    /// <summary>
+    ///     Mint a new token with state object for a token mining contract
+    /// </summary>
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
+    /// <param name="amount">The amount of tokens to mint</param>
+    /// <param name="lockAmount">The amount of tokens that'll be locked in the mining contract</param>
+    /// <param name="blockHeight">The block height the token mining will start</param>
+    /// <param name="reward">The initial token reward per block</param>
+    function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
+        int constant MinimumValue = 1000 sats;
+
+        // parameter validation
+        require(checkSig(signature, fund));
+        require(amount > 0);
+        require(lockAmount > 0);
+        require(amount >= lockAmount);
         require(blockHeight >= 0);
-        require(tx.time >= blockHeight); // ensure blockHeight is at most the current height
-
-        // validate UTXO inputs
-        require(tx.inputs.length == 3);
-        // token and NFT should be from same transaction
-        require(tx.inputs[0].outpointTransactionHash == tx.inputs[1].outpointTransactionHash);
-        // ensure transaction fee input doesn't have other data
-        require(tx.inputs[2].nftCommitment == 0x); 
-        require(tx.inputs[2].tokenCategory == 0x);
-
-        // get state
-        bytes state = tx.inputs[1].nftCommitment;
-
-        // raw state validation
-        require(state.length (8 * 3));
-
-        // split state
-        bytes releaseHeight_state, bytes rest = state.split(8);
-        bytes halvingHeight_state, bytes reward_state = rest.split(8);
-        
-        // type state
-        int releaseHeight = int(releaseHeight_state);
-        int halvingHeight = int(halvingHeight_state);
-        int reward = int(reward_state);
-
-        // validate typed state
-        require(releaseHeight >= 0);
-        require(halvingHeight >= 0);
-        require(releaseHeight >= halvingHeight);
         require(reward > 0);
-        require(within(halvingLength, 1, 500000000));
 
-        // ensure blocks have been produced to release more
-        require(tx.time >= releaseHeight);
-        require(blockHeight >= releaseHeight);
-
-        // declare next state
-        int releaseHeight_next = blockHeight;
-        int halvingHeight_next = halvingHeight;
-        int reward_next = reward;
-
-        // start logic
-        int minedBlocksSinceLastRelease = blockHeight - releaseHeight + 1;
-        int releaseAmount = minedBlocksSinceLastRelease * reward;
-
-        // check for halving event; release height will stop at halving height
-        int minedBlocksSinceHalving = blockHeight - halvingHeight + 1;
-        if (minedBlocksSinceHalving >= halvingLength) {
-            releaseHeight_next = halvingHeight + halvingLength;
-            halvingHeight_next = releaseHeight_next;
-            reward_next = max(reward / 2, 1); // don't let it go to zero, a minimum of one token per block
-
-            // stop the release at the halving at most
-            minedBlocksSinceLastRelease = releaseHeight_next - releaseHeight;
-            releaseAmount = minedBlocksSinceLastRelease * reward;
-        }
-
-        // calculate token change
-        int tokenAmount = tx.inputs[0].tokenAmount;
-        int changeAmount = max(tokenAmount - releaseAmount, tokenAmount);
+        // verify inputs
+        require(tx.inputs.length == 1);
+        require(tx.inputs[0].tokenCategory == 0x);
         
-        // validate UTXO outputs
-        if (changeAmount <= releaseAmount) { // EOL
-            require(tx.outputs.length == 1);
-            require(tx.outputs[0].tokenAmount == changeAmount);
-        } else { // normal release
-            require(tx.outputs.length == 3);
+        // verify outputs
+        require(tx.outputs.length == 3);
+        
+        // verify token output        
+        require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[0].value == MinimumValue);
+        require(tx.outputs[0].tokenAmount == lockAmount);
 
-            // Check that the released amount is sent to the fund
-            require(tx.outputs[0].tokenAmount == releaseAmount);
+        // verify state output
+        require(tx.outputs[1].tokenCategory == tx.inputs[0].outpointTransactionHash);
+        require(tx.outputs[1].value == MinimumValue);
+        require(tx.outputs[1].nftCommitment == bytes8(blockHeight) + bytes8(blockHeight) + bytes8(reward));
 
-            // Send the change value back to the same smart contract locking bytecode
-            require(tx.outputs[1].amount == MinimumAmount);
-            require(tx.outputs[1].tokenAmount == changeAmount);
-            require(tx.outputs[1].lockingBytecode == tx.inputs[0].lockingBytecode); 
-            require(tx.outputs[1].tokenCategory == tx.inputs[0].tokenCategory);
+        // verify change output
+        bytes25 fundLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
+        require(tx.outputs[2].lockingBytecode == fundLockingBytecode);
+        require(tx.outputs[2].nftCommitment == 0x);
 
-            require(tx.outputs[2].amount == MinimumAmount);
-            require(tx.outputs[2].lockingBytecode == tx.inputs[0].lockingBytecode); // Send the nft commitment to contract locking bytecode
-            require(tx.outputs[2].nftCommitment == bytes8(releaseHeight_next) + bytes8(halvingHeight_next) + bytes8(reward_next)); // Updated state check
+        // verify token change output
+        int tokenChange = max(amount - lockAmount, 0);
+        if(tokenChange > 0) {
+            require(tx.outputs[2].tokenCategory == tx.inputs[0].outpointTransactionHash);
+            require(tx.outputs[2].tokenAmount == tokenChange);
+        } else {
+            require(tx.outputs[2].tokenCategory == 0x);
         }
-
-        bytes25 recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(fund));
-        require(tx.outputs[0].lockingBytecode == recipientLockingBytecode); // ensure release is to the fund
-        require(tx.outputs[0].nftCommitment == 0x);
-        require(tx.outputs[0].tokenCategory == tx.inputs[0].tokenCategory);
     }
 }
