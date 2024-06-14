@@ -1,15 +1,31 @@
 pragma cashscript ^0.10.0;
 
+/// <summary>
+///     Mint the token and state for a token mining contract
+/// </summary>
+/// <param name="fund">The address used to supply and auth the contract</param>
 contract TokenMining_Mint(
     pubkey fund,
 ) {
+    /// <summary>
+    ///     Spend UTXOs with no restrictions
+    /// </summary>
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
     function spend(sig signature) {
         // validate parameters
         require(checkSig(signature, fund));
     }
 
+    /// <summary>
+    ///     Mint a new token with state object for a token mining contract
+    /// </summary>
+    /// <param name="signature">The fund's transaction signature to spend UTXOs</param>
+    /// <param name="amount">The amount of tokens to mint</param>
+    /// <param name="lockAmount">The amount of tokens that'll be locked in the mining contract</param>
+    /// <param name="blockHeight">The block height the token mining will start</param>
+    /// <param name="reward">The initial token reward per block</param>
     function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
-        int constant MinimumFee = 1000 sats;
+        int constant MinimumValue = 1000 sats;
 
         // parameter validation
         require(checkSig(signature, fund));
@@ -28,12 +44,12 @@ contract TokenMining_Mint(
         
         // verify token output        
         require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
-        require(tx.outputs[0].amount == MinimumFee);
+        require(tx.outputs[0].value == MinimumValue);
         require(tx.outputs[0].tokenAmount == lockAmount);
 
         // verify state output
         require(tx.outputs[1].tokenCategory == tx.inputs[0].outpointTransactionHash);
-        require(tx.outputs[1].amount == MinimumFee);
+        require(tx.outputs[1].value == MinimumValue);
         require(tx.outputs[1].nftCommitment == bytes8(blockHeight) + bytes8(blockHeight) + bytes8(reward));
 
         // verify change output
