@@ -93,13 +93,12 @@ contract TokenMining(
         }
 
         // calculate token change
-        int tokenAmount = tx.inputs[0].tokenAmount;
-        int changeAmount = max(tokenAmount - releaseAmount, tokenAmount);
+        int changeAmount = tx.inputs[0].tokenAmount - releaseAmount;
         
         // validate UTXO outputs
-        if (changeAmount <= releaseAmount) { // EOL
+        if (changeAmount <= 0) { // EOL
             require(tx.outputs.length == 1);
-            require(tx.outputs[0].tokenAmount == changeAmount);
+            require(tx.outputs[0].tokenAmount == tx.inputs[0].tokenAmount);
         } else { // normal release
             require(tx.outputs.length == 3);
 
