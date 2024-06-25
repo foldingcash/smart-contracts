@@ -5,7 +5,7 @@ pragma cashscript >=0.9.3;
 /// </summary>
 /// <param name="fund">The receiving fund</param>
 /// <param name="halvingLength">The number of blocks between halvings</param>
-contract TokenRelease(
+contract TokenVault_Release(
     pubkey fund,
     int halvingLength,
 ) {
