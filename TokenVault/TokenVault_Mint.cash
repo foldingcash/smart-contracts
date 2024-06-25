@@ -1,10 +1,10 @@
-pragma cashscript ^0.10.0;
+pragma cashscript >=0.9.3;
 
 /// <summary>
 ///     Mint the token and state for a token mining contract
 /// </summary>
 /// <param name="fund">The address used to supply and auth the contract</param>
-contract TokenMining_Mint(
+contract TokenRelease_Mint(
     pubkey fund,
 ) {
     /// <summary>
@@ -33,8 +33,6 @@ contract TokenMining_Mint(
     ///     <o2>Return change to fund w/ any unlocked tokens</o2>
     /// </outputs>
     function mint(sig signature, int amount, int lockAmount, int blockHeight, int reward) {
-        int constant MinimumValue = 1000 sats;
-
         // parameter validation
         require(checkSig(signature, fund));
         require(amount > 0);
@@ -52,12 +50,10 @@ contract TokenMining_Mint(
         
         // verify token output        
         require(tx.outputs[0].tokenCategory == tx.inputs[0].outpointTransactionHash);
-        require(tx.outputs[0].value == MinimumValue);
         require(tx.outputs[0].tokenAmount == lockAmount);
 
         // verify state output
         require(tx.outputs[1].tokenCategory == tx.inputs[0].outpointTransactionHash);
-        require(tx.outputs[1].value == MinimumValue);
         require(tx.outputs[1].nftCommitment == bytes8(blockHeight) + bytes8(blockHeight) + bytes8(reward));
 
         // verify change output

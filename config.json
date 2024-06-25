@@ -1,0 +1,26 @@
+{
+    "Network": "chipnet",
+    "Contract": {
+        "AddressType": "p2sh32",
+        "Minting": {
+            "Constructor": {
+                "Fund": {
+                    "Type": "Wallet",
+                    "Value": "PrivateKey"
+                }
+            }
+        },
+        "Release": {
+            "Constructor": {
+                "Fund": {
+                    "Type": "Wallet",
+                    "Value": "PrivateKey"
+                },
+                "HalvingLength": {
+                    "Type": "Value",
+                    "Value": 157500
+                }
+            }
+        }
+    }
+}

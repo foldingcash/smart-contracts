@@ -1,0 +1,18 @@
+{
+  "name": "foldingcash.smart-contracts",
+  "type": "module",
+  "version": "0.1.0",
+  "author": "FoldingCash LLC",
+  "license": "MIT",
+  "dependencies": {
+    "cashc": "0.10.0-next.5",
+    "cashscript": "0.10.0-next.5",
+    "prompt-sync": "^4.2.0",
+    "winston": "^3.13.0"
+  },
+  "scripts": {
+    "mint": "node ./TokenVault/mintToken.js",
+    "release": "node ./TokenVault/releaseToken.js",
+    "send": "node ./TokenVault/sendToken.js"
+  }
+}
