@@ -11,6 +11,7 @@
     "winston": "^3.13.0"
   },
   "scripts": {
+    "generate": "node ./TokenVault/generateArtifacts.js",
     "mint": "node ./TokenVault/mintToken.js",
     "release": "node ./TokenVault/releaseToken.js",
     "send": "node ./TokenVault/sendToken.js"
