@@ -4,7 +4,7 @@ pragma cashscript >=0.9.3;
 ///     Mint the token and state for a token mining contract
 /// </summary>
 /// <param name="fund">The address used to supply and auth the contract</param>
-contract TokenRelease_Mint(
+contract TokenVault_Mint(
     pubkey fund,
 ) {
     /// <summary>
