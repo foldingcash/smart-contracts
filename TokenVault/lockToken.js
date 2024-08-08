@@ -22,10 +22,10 @@ try {
   const { releaseContract, halvingLength } = await buildReleaseTokenContract({ addressType: config.Contract.AddressType, provider: networkProvider });
 
   const fundUtxos = await networkProvider.getUtxos(fundAddress);
-  logger.debug('fund UTXOs', fundUtxos);
+  logger.debug(`fund UTXOs: ${fundUtxos}`);
 
   if (fundUtxos.length === 0) {
-    throw Error('No available UTXOs, send the token and a separate well funded UTXO to', fundAddress);
+    throw Error(`No available UTXOs, send the token and a separate well funded UTXO to ${fundAddress}`);
   }
 
   if (fundUtxos.length === 1) {
@@ -64,10 +64,6 @@ try {
   if (!isConfirmed) {
     throw Error('User denied input values and script is aborting.');
   }
-
-  console.log('testing', releaseContract.tokenAddress);
-  console.log('token input', tokenInput);
-  console.log('fund input', fundInput);
 
   const buildTransaction = fee => {
     const changeValue = tokenInput.satoshis + fundInput.satoshis - (2n * DustValue) - fee;
