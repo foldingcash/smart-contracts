@@ -1,5 +1,6 @@
 {
     "Network": "chipnet",
+    "NetworkOptions": ["chipnet", "mainnet"],
     "Contract": {
         "AddressType": "p2sh32",
         "Minting": {
