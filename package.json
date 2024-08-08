@@ -13,6 +13,7 @@
   "scripts": {
     "generate": "node ./TokenVault/generateArtifacts.js",
     "mint": "node ./TokenVault/mintToken.js",
+    "lock": "node ./TokenVault/lockToken.js",
     "release": "node ./TokenVault/releaseToken.js",
     "send": "node ./TokenVault/sendToken.js"
   }
