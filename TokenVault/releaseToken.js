@@ -97,6 +97,9 @@ try {
     logger.debug(`next state data calculated: ${nextReleaseHeight} ${nextHalvingHeight} ${nextReward}`);
     logger.debug(`end of life: ${endOfLife} token change: ${changeTokenAmount}`);
     logger.debug(`encoded state data: ${encodeBigIntToHexLE(nextReleaseHeight)}${encodeBigIntToHexLE(nextHalvingHeight)}${encodeBigIntToHexLE(nextReward)}`);
+    console.log('tokenInput', tokenInput);
+    console.log('stateInput', stateInput);
+    console.log('fundInput', fundInput);
 
     const buildTransaction = fee => {
         let changeValue;
@@ -166,4 +169,5 @@ try {
     }
 } catch (e) {
     logger.error(e.toString());
+    console.log('unhandled error', e);
 }
