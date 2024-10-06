@@ -5,8 +5,8 @@
   "author": "FoldingCash LLC",
   "license": "MIT",
   "dependencies": {
-    "cashc": "0.10.0-next.5",
-    "cashscript": "0.10.0-next.5",
+    "cashc": "^0.10.1",
+    "cashscript": "^0.10.1",
     "prompt-sync": "^4.2.0",
     "winston": "^3.13.0"
   },

@@ -23,6 +23,6 @@ export default async function getWallet() {
   const pubKeyBin = secp256k1.derivePublicKeyCompressed(decodedWif.privateKey);
   const pubKeyHex = binToHex(pubKeyBin);
   const pubKeyHash = ripemd160.hash(sha256.hash(pubKeyBin));
-  const address = encodeCashAddress(config.Network === 'mainnet' ? 'bitcoincash' : 'bchtest', 'p2pkhWithTokens', pubKeyHash);
-  return { privateKey, signatureTemplate, pubKeyBin, pubKeyHex, pubKeyHash, address };
+  const encoded = encodeCashAddress({ prefix: config.Network === 'mainnet' ? 'bitcoincash' : 'bchtest', type: 'p2pkhWithTokens', payload: pubKeyHash });
+  return { privateKey, signatureTemplate, pubKeyBin, pubKeyHex, pubKeyHash, address: typeof encoded === 'string' ? encoded : encoded.address };
 }
