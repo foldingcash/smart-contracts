@@ -48,6 +48,10 @@ try {
 
     const { tokenInput, stateInput, fundInput } = selectInputs();
 
+    if (fundInput.vout !== 0) {
+        throw Error('The fund input must have a vout of zero');
+    }
+
     const { amount: lockedTokenAmount, category: tokenCategory } = tokenInput.token;
     const { commitment: previousState } = stateInput.token.nft;
 
