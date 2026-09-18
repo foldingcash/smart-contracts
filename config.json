@@ -1,5 +1,5 @@
 {
-    "Network": "chipnet",
+    "Network": "mainnet",
     "NetworkOptions": ["chipnet", "mainnet"],
     "Contract": {
         "AddressType": "p2sh32",

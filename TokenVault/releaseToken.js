@@ -10,7 +10,7 @@ import decodeHexToBigIntLE from '../util/decodeHexToBigIntLE.js';
 
 import buildReleaseTokenContract from './buildReleaseTokenContract.js';
 
-import config from '../config.json' assert { type: 'json' };
+import config from '../config.json' with { type: 'json' };
 
 try {
     const network = config.Network;
