@@ -197,18 +197,23 @@
     eventemitter3 "^5.0.1"
     lossless-json "^4.0.1"
 
-"@electrum-cash/socket@^4.0.0", "@electrum-cash/socket@^4.0.1":
+"@electrum-cash/socket@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@electrum-cash/socket/-/socket-4.0.1.tgz#816a892cb2145ed4fe96333011554394c1a3f559"
   integrity sha512-B76yix/29nBV/nwIh5rumy9xNOUQmlDPF6vVrPM9evSRq8fA6cNTBh1OnbQqG8ZX1/0eD3xs9TFFqipFmHS56w==
 
-"@electrum-cash/web-socket@^4.0.2":
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/@electrum-cash/web-socket/-/web-socket-4.0.3.tgz#2e94e1e995f3798cf96dae21c3fe345b9030f489"
-  integrity sha512-ESV8f0lFSK/DFLqyq9RLLIvDw5nrI7McJcVw+YCeN/8m/0DdKEFsl3Xw2XvDvi+fef6XzG2odPasd8c4+jNQrA==
+"@electrum-cash/socket@^4.1.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@electrum-cash/socket/-/socket-4.2.0.tgz#9b3264418e40aa9bd1af1a366b33fa9978c6f0c9"
+  integrity sha512-xYqFLDc+eRTgAykAtHXOUfE6xvqfqWgTFLjSaLXwNMJ+iBH2vgZoMOH7K0uvgzdnM8TP84s64tup7TWpHkIA8w==
+
+"@electrum-cash/web-socket@4.1.1", "@electrum-cash/web-socket@^4.0.2":
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/@electrum-cash/web-socket/-/web-socket-4.1.1.tgz#e31d8423da4fb4e3b0bb706d9f9623a8124c81d4"
+  integrity sha512-UOvjUGZ9OqwMcXOlI1miDQTEfxam2EZVQbDwg6ZziS2KyNoag50xmdVQX3wOGAfsGEjQbFYVuy5EpRrKJP5/iA==
   dependencies:
     "@electrum-cash/debug-logs" "^1.0.0"
-    "@electrum-cash/socket" "^4.0.0"
+    "@electrum-cash/socket" "^4.1.0"
     "@monsterbitar/isomorphic-ws" "^5.3.0"
     "@types/ws" "^8.5.5"
     async-mutex "^0.5.0"

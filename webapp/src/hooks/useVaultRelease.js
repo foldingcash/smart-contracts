@@ -209,6 +209,7 @@ export function useVaultRelease() {
         setSendError(null);
         try {
             const build = makeReleaseTransactionBuilder({
+                provider: vault.provider,
                 releaseContract: vault.releaseContract,
                 signatureTemplate: wallet.signatureTemplate,
                 fundAddress: vault.fundAddress,
@@ -225,12 +226,12 @@ export function useVaultRelease() {
                 nextReward: preview.nextReward,
             });
 
-            let transaction = build(DustValue * 2n);
-            const roughHex = await transaction.build();
-            const bytes = BigInt(roughHex.length) / 2n;
+            // getTransactionSize skips the fee checks, so the placeholder fee
+            // doesn't matter; value fields are fixed-width so the size holds.
+            const bytes = build(DustValue * 2n).getTransactionSize();
             const fee = calculateTransactionFee(bytes);
-            transaction = build(fee);
-            const hex = await transaction.build();
+            const transaction = build(fee);
+            const hex = transaction.build();
 
             setTxResult({ transaction, hex, fee });
         } catch (error) {
@@ -246,15 +247,19 @@ export function useVaultRelease() {
         setSendLoading(true);
         setSendError(null);
         try {
-            const response = await txResult.transaction.send();
-            const txid = typeof response === 'string' ? response : (response?.txid ?? JSON.stringify(response));
+            // Broadcast the raw hex rather than calling transaction.send():
+            // send() first runs cashscript's local debug evaluation, which
+            // falsely fails with NULLFAIL for this pre-0.11 cashc artifact even
+            // though the transaction is valid. The node still fully validates
+            // the transaction on broadcast.
+            const txid = await vault.provider.sendRawTransaction(txResult.hex);
             setSendResult({ txid });
         } catch (error) {
             setSendError(messageOf(error));
         } finally {
             setSendLoading(false);
         }
-    }, [txResult]);
+    }, [txResult, vault]);
 
     return {
         network,

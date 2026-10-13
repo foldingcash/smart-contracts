@@ -8,7 +8,7 @@
 // hands it straight to cashscript's Contract class, which is all that's
 // needed to interact with an already-deployed contract.
 
-import { Contract, ElectrumNetworkProvider } from 'cashscript';
+import { Contract, ElectrumNetworkProvider, TransactionBuilder } from 'cashscript';
 
 import releaseArtifact from '../contracts/TokenVault_Release.artifact.json';
 import { decodeHexToBigIntLE, encodeBigIntToHexLE } from './bigintCodec.js';
@@ -102,6 +102,7 @@ export function selectVaultInputs({ contractUtxos, fundUtxos }) {
  * fee -- exactly the two-pass approach releaseToken.js uses.
  */
 export function makeReleaseTransactionBuilder({
+    provider,
     releaseContract,
     signatureTemplate,
     fundAddress,
@@ -130,30 +131,47 @@ export function makeReleaseTransactionBuilder({
             );
         }
 
-        let transaction = releaseContract.functions
-            .release(signatureTemplate, blockHeight)
-            .withoutChange()
-            .withoutTokenChange()
-            .from(tokenInput)
-            .from(stateInput)
-            .fromP2PKH(fundInput, signatureTemplate)
-            .to(fundAddress, changeValue, {
-                amount: releaseTokenAmount,
-                category: tokenCategory,
+        // Both vault UTXOs are unlocked by the contract's release function;
+        // the fee UTXO is a plain P2PKH spend from the fund wallet.
+        const contractUnlocker = releaseContract.unlock.release(signatureTemplate, blockHeight);
+
+        const transaction = new TransactionBuilder({ provider })
+            .addInput(tokenInput, contractUnlocker)
+            .addInput(stateInput, contractUnlocker)
+            .addInput(fundInput, signatureTemplate.unlockP2PKH())
+            // The contract requires tx.time (nLockTime) >= blockHeight. The
+            // legacy contract.functions API defaulted the locktime to the
+            // current block height; TransactionBuilder defaults it to 0.
+            .setLocktime(Number(blockHeight))
+            .addOutput({
+                to: fundAddress,
+                amount: changeValue,
+                token: {
+                    amount: releaseTokenAmount,
+                    category: tokenCategory,
+                },
             });
 
         if (!endOfLife) {
-            transaction = transaction
-                .to(releaseContract.tokenAddress, DustValue, {
-                    amount: changeTokenAmount,
-                    category: tokenCategory,
+            transaction
+                .addOutput({
+                    to: releaseContract.tokenAddress,
+                    amount: DustValue,
+                    token: {
+                        amount: changeTokenAmount,
+                        category: tokenCategory,
+                    },
                 })
-                .to(releaseContract.tokenAddress, DustValue, {
-                    amount: 0n,
-                    category: fundInput.txid,
-                    nft: {
-                        capability: 'none',
-                        commitment: `${encodeBigIntToHexLE(nextReleaseHeight)}${encodeBigIntToHexLE(nextHalvingHeight)}${encodeBigIntToHexLE(nextReward)}`,
+                .addOutput({
+                    to: releaseContract.tokenAddress,
+                    amount: DustValue,
+                    token: {
+                        amount: 0n,
+                        category: fundInput.txid,
+                        nft: {
+                            capability: 'none',
+                            commitment: `${encodeBigIntToHexLE(nextReleaseHeight)}${encodeBigIntToHexLE(nextHalvingHeight)}${encodeBigIntToHexLE(nextReward)}`,
+                        },
                     },
                 });
         }
