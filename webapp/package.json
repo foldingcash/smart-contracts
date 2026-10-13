@@ -1,0 +1,28 @@
+{
+    "name": "foldingcash.token-vault-webapp",
+    "private": true,
+    "type": "module",
+    "version": "0.1.0",
+    "author": "FoldingCash LLC",
+    "license": "MIT",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "sync-artifact": "node scripts/sync-artifact.mjs"
+    },
+    "dependencies": {
+        "@bitauth/libauth": "^3.0.0",
+        "cashscript": "0.14.0-next.5",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^4.3.1",
+        "vite": "^5.4.8",
+        "vite-plugin-node-polyfills": "^0.24.0"
+    },
+    "resolutions": {
+        "@electrum-cash/web-socket": "4.1.1"
+    }
+}
