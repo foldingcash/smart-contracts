@@ -21,3 +21,9 @@ Releasing the token from the vault is done by calling `yarn release` and answeri
     * block height index starts at zero
     * division is floored like standard int computing
     * pubkey is public key hex
+
+
+# TODO
+
+1. update styling to match folding.cash and token distribution
+1. ensure README's are in sync with current code
